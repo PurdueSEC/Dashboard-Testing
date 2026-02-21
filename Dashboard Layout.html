@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e10;
+      --surface: #18181c;
+      --border: #2a2a30;
+      --accent: #c8f060;
+      --accent2: #f06060;
+      --accent3: #60c8f0;
+      --accent4: #f0c060;
+      --text: #e8e8e0;
+      --muted: #6a6a72;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      padding: 2rem 3rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+    }
+
+    header h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    header span {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* Tab bar */
+    .tab-bar {
+      display: flex;
+      padding: 0 3rem;
+      border-bottom: 1px solid var(--border);
+      gap: 0;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 1rem 1.5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab-btn.active .dot { opacity: 1; background: var(--accent); }
+    .tab-btn[data-tab="analytics"].active { border-bottom-color: var(--accent3); }
+    .tab-btn[data-tab="analytics"].active .dot { background: var(--accent3); }
+    .tab-btn[data-tab="reports"].active { border-bottom-color: var(--accent4); }
+    .tab-btn[data-tab="reports"].active .dot { background: var(--accent4); }
+    .tab-btn[data-tab="settings"].active { border-bottom-color: var(--accent2); }
+    .tab-btn[data-tab="settings"].active .dot { background: var(--accent2); }
+
+    /* Content */
+    main { flex: 1; padding: 2.5rem 3rem; }
+
+    .tab-panel { display: none; animation: fadeIn 0.25s ease; }
+    .tab-panel.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Section title */
+    .section-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .section-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 2rem;
+    }
+
+    /* Cards grid */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .card-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .card-value {
+      font-family: 'Fraunces', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .card-delta {
+      font-size: 0.72rem;
+      margin-top: 0.4rem;
+      color: var(--muted);
+    }
+    .card-delta.up { color: var(--accent); }
+    .card-delta.down { color: var(--accent2); }
+
+    /* Bar chart */
+    .bar-chart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.5rem;
+    }
+
+    .bar-chart-title {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+      height: 120px;
+    }
+
+    .bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .bar {
+      width: 100%;
+      border-radius: 2px 2px 0 0;
+      transition: opacity 0.2s;
+    }
+    .bar:hover { opacity: 0.75; }
+
+    .bar-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .badge.green { background: rgba(200,240,96,0.12); color: var(--accent); }
+    .badge.red   { background: rgba(240,96,96,0.12);  color: var(--accent2); }
+    .badge.blue  { background: rgba(96,200,240,0.12); color: var(--accent3); }
+
+    /* Settings form */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 640px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.5rem; }
+    .field label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .field input, .field select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.6rem 0.8rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent2); }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      margin-bottom: 0.75rem;
+      max-width: 640px;
+    }
+
+    .toggle-label { font-size: 0.8rem; }
+    .toggle-sub   { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .toggle {
+      width: 36px; height: 20px;
+      background: var(--border);
+      border-radius: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: var(--accent2); }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: transform 0.2s;
+    }
+    .toggle.on::after { transform: translateX(16px); }
+
+    .save-btn {
+      margin-top: 1.5rem;
+      background: none;
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.7rem 1.8rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .save-btn:hover { background: var(--accent2); color: var(--bg); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Control Room</h1>
+  <span>v2.4.1 — live</span>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="overview">
+    <span class="dot"></span> Overview
+  </button>
+  <button class="tab-btn" data-tab="analytics">
+    <span class="dot"></span> Analytics
+  </button>
+  <button class="tab-btn" data-tab="reports">
+    <span class="dot"></span> Reports
+  </button>
+  <button class="tab-btn" data-tab="settings">
+    <span class="dot"></span> Settings
+  </button>
+</nav>
+
+<main>
+
+  <!-- OVERVIEW -->
+  <div class="tab-panel active" id="overview">
+    <div class="section-title">Overview</div>
+    <div class="section-sub">Today, Feb 21 2026 — all metrics live</div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">Revenue</div>
+        <div class="card-value" style="color:var(--accent)">$84.2k</div>
+        <div class="card-delta up">↑ 12.4% vs last week</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Active Users</div>
+        <div class="card-value" style="color:var(--accent3)">3,481</div>
+        <div class="card-delta up">↑ 7.1%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Churn Rate</div>
+        <div class="card-value" style="color:var(--accent2)">2.3%</div>
+        <div class="card-delta down">↑ 0.4% (bad)</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Avg Session</div>
+        <div class="card-value" style="color:var(--accent4)">4m 12s</div>
+        <div class="card-delta">→ steady</div>
+      </div>
+    </div>
+
+    <div class="bar-chart">
+      <div class="bar-chart-title">Daily Revenue — last 7 days</div>
+      <div class="bars" id="overviewBars"></div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div class="tab-panel" id="analytics">
+    <div class="section-title">Analytics</div>
+    <div class="section-sub">Traffic sources & engagement breakdown</div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">Page Views</div>
+        <div class="card-value" style="color:var(--accent3)">128k</div>
+        <div class="card-delta up">↑ 22%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Bounce Rate</div>
+        <div class="card-value" style="color:var(--accent2)">38%</div>
+        <div class="card-delta down">↑ 3%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Conversions</div>
+        <div class="card-value" style="color:var(--accent)">1,204</div>
+        <div class="card-delta up">↑ 9%</div>
+      </div>
+    </div>
+
+    <div class="bar-chart">
+      <div class="bar-chart-title">Traffic by Source</div>
+      <div class="bars" id="analyticsBars"></div>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="tab-panel" id="reports">
+    <div class="section-title">Reports</div>
+    <div class="section-sub">Recent export log</div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Report</th>
+          <th>Generated</th>
+          <th>Size</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Q4 Revenue Summary</td>
+          <td>Feb 20, 2026</td>
+          <td>1.2 MB</td>
+          <td><span class="badge green">Ready</span></td>
+        </tr>
+        <tr>
+          <td>User Cohort Analysis</td>
+          <td>Feb 18, 2026</td>
+          <td>3.8 MB</td>
+          <td><span class="badge green">Ready</span></td>
+        </tr>
+        <tr>
+          <td>Churn Prediction Model</td>
+          <td>Feb 17, 2026</td>
+          <td>890 KB</td>
+          <td><span class="badge blue">Processing</span></td>
+        </tr>
+        <tr>
+          <td>Marketing Funnel</td>
+          <td>Feb 15, 2026</td>
+          <td>2.1 MB</td>
+          <td><span class="badge green">Ready</span></td>
+        </tr>
+        <tr>
+          <td>Infrastructure Cost Audit</td>
+          <td>Feb 10, 2026</td>
+          <td>540 KB</td>
+          <td><span class="badge red">Failed</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tab-panel" id="settings">
+    <div class="section-title">Settings</div>
+    <div class="section-sub">Account & preferences</div>
+
+    <div class="settings-grid">
+      <div class="field">
+        <label>Display Name</label>
+        <input type="text" value="Alex Rivera" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" value="alex@company.io" />
+      </div>
+      <div class="field">
+        <label>Timezone</label>
+        <select>
+          <option>UTC−05:00 Eastern</option>
+          <option>UTC−08:00 Pacific</option>
+          <option>UTC+00:00 GMT</option>
+          <option>UTC+01:00 CET</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Currency</label>
+        <select>
+          <option>USD ($)</option>
+          <option>EUR (€)</option>
+          <option>GBP (£)</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:1.5rem">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Email Notifications</div>
+          <div class="toggle-sub">Daily digest of key metrics</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Dark Mode</div>
+          <div class="toggle-sub">Currently enabled</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Two-Factor Auth</div>
+          <div class="toggle-sub">Recommended for security</div>
+        </div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <button class="save-btn">Save Changes</button>
+  </div>
+
+</main>
+
+<script>
+  // Tab switching
+  const btns = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Draw bar chart
+  function drawBars(containerId, data, color) {
+    const container = document.getElementById(containerId);
+    const max = Math.max(...data.map(d => d.val));
+    data.forEach(d => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bar-wrap';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height = (d.val / max * 100) + '%';
+      bar.style.background = color;
+      const label = document.createElement('div');
+      label.className = 'bar-label';
+      label.textContent = d.label;
+      wrap.appendChild(bar);
+      wrap.appendChild(label);
+      container.appendChild(wrap);
+    });
+  }
+
+  drawBars('overviewBars', [
+    {label:'Mon', val:62}, {label:'Tue', val:78}, {label:'Wed', val:55},
+    {label:'Thu', val:90}, {label:'Fri', val:84}, {label:'Sat', val:47}, {label:'Sun', val:71}
+  ], 'var(--accent)');
+
+  drawBars('analyticsBars', [
+    {label:'Organic', val:88}, {label:'Direct', val:64}, {label:'Social', val:72},
+    {label:'Email', val:45}, {label:'Paid', val:38}
+  ], 'var(--accent3)');
+</script>
+</body>
+</html>
